@@ -1,7 +1,8 @@
 import os
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google import genai
+from google.genai import types
 import json
 from typing import Optional
 from db import insert_many
@@ -24,8 +25,11 @@ def get_embeddings(chunks: list[str]) -> list[list[float]]:
         for i in range(0, len(chunks), 100):
             batch = chunks[i:i + 100]
             result = client.models.embed_content(
-                model="text-embedding-004",
+                model="gemini-embedding-001",
                 contents=batch,
+                config=types.EmbedContentConfig(
+                    output_dimensionality=768,
+                )
             )
             embeddings.extend([embedding.values for embedding in result.embeddings])
         print("Embeddings fetched successfully.")
