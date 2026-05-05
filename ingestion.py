@@ -4,7 +4,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from google import genai
 from google.genai import types
 import json
+import torch
 from typing import Optional
+from sentence_transformers import SentenceTransformer
 from db import insert_many
 
 from dotenv import load_dotenv
@@ -13,28 +15,42 @@ load_dotenv()
 # Initialize Gemini AI Client
 client = genai.Client(api_key=f"{os.getenv('GOOGLE_API_KEY')}")
 
-def get_embeddings(chunks: list[str]) -> list[list[float]]:
-    """
-    Fetch embedding vector using Google Gemini API.
-    """
-    try:
-        print("Fetching embeddings from Gemini API...")
-        embeddings = []
+# Initialize local embedding model
+_device = "mps" if torch.backends.mps.is_available() else "cpu"
+print("Loading embedding model...")
+_embed_model = SentenceTransformer("BAAI/bge-large-en-v1.5", device=_device)
+print("Embedding model loaded.")
 
-        # Split chunks into batches of 100
-        for i in range(0, len(chunks), 100):
-            batch = chunks[i:i + 100]
-            result = client.models.embed_content(
-                model="gemini-embedding-001",
-                contents=batch,
-                config=types.EmbedContentConfig(
-                    output_dimensionality=768,
-                )
-            )
-            embeddings.extend([embedding.values for embedding in result.embeddings])
-        print("Embeddings fetched successfully.")
-        return embeddings
-    
+# def get_embeddings(chunks: list[str]) -> list[list[float]]:
+#     """
+#     Fetch embedding vector using Google Gemini API.
+#     """
+#     try:
+#         print("Fetching embeddings from Gemini API...")
+#         embeddings = []
+#         for i in range(0, len(chunks), 100):
+#             batch = chunks[i:i + 100]
+#             result = client.models.embed_content(
+#                 model="gemini-embedding-001",
+#                 contents=batch,
+#                 config=types.EmbedContentConfig(output_dimensionality=768)
+#             )
+#             embeddings.extend([embedding.values for embedding in result.embeddings])
+#         print("Embeddings fetched successfully.")
+#         return embeddings
+#     except Exception as e:
+#         print(f"❌ Error fetching embedding: {e}")
+#         return None
+
+def get_embeddings(chunks: list[str]) -> list[list[float]]:
+    try:
+        embeddings = _embed_model.encode(
+            chunks,
+            normalize_embeddings=True,
+            batch_size=256,
+            show_progress_bar=False,
+        )
+        return embeddings.tolist()
     except Exception as e:
         print(f"❌ Error fetching embedding: {e}")
         return None

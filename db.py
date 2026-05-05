@@ -125,14 +125,15 @@ def fetch_similar_documents(
         cursor = connection.cursor()
 
         if table_name == "legal_docs":
+            vec_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
             fetch_query = f"""
             SELECT content, title,
-            (1 - (embedding <=> %s::vector)) AS similarity
+            (1 - (embedding <=> '{vec_str}'::vector)) AS similarity
             FROM {table_name}
-            ORDER BY embedding <=> %s::vector
-            LIMIT %s;
+            ORDER BY embedding <=> '{vec_str}'::vector
+            LIMIT {top_k};
             """
-            cursor.execute(fetch_query, (query_embedding, query_embedding, top_k))
+            cursor.execute(fetch_query)
             rows = cursor.fetchall()
             for row in rows:
                 results.append({
@@ -141,14 +142,15 @@ def fetch_similar_documents(
                     "similarity": row[2]
                 })
         elif table_name == "cases":
+            vec_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
             fetch_query = f"""
             SELECT content, case_title, section_type, doc_id,
-            (1 - (embedding <=> %s::vector)) AS similarity
+            (1 - (embedding <=> '{vec_str}'::vector)) AS similarity
             FROM {table_name}
-            ORDER BY embedding <=> %s::vector
-            LIMIT %s;
+            ORDER BY embedding <=> '{vec_str}'::vector
+            LIMIT {top_k};
             """
-            cursor.execute(fetch_query, (query_embedding, query_embedding, top_k))
+            cursor.execute(fetch_query)
             rows = cursor.fetchall()
             for row in rows:
                 results.append({
