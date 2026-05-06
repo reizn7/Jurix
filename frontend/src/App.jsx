@@ -77,6 +77,7 @@ function App() {
         timestamp: new Date()
       }
       setMessages(prev => [...prev, assistantMsg])
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
     
       const errorMsg = {

@@ -18,7 +18,7 @@ function ChatMessage({ message }) {
     const elements = []
     let currentList = []
     let listType = null
-    let inSection = null 
+    // let inSection = null 
     
     lines.forEach((line, index) => {
       const trimmedLine = line.trim()
